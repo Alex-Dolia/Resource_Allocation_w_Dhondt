@@ -1,4 +1,4 @@
-Allocation_Optimization_using_DHont.ipynb and Allocation_Optimization_using_DHont.sql are resource allocation that are implemented in Python and BIgQuery SQL.
+Allocation_Optimization_using_DHont.ipynb and Allocation_Optimization_using_DHont.sql are resource allocation that are implemented in Python and BigQuery SQL.
 It was tested for BigQuery, respectively. 
 
 Problem statement:
