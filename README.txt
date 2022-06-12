@@ -1,5 +1,4 @@
-Allocation_Optimization_using_DHont.ipynb and Allocation_Optimization_using_DHont.sql are resource allocation that are implemented in Python and BigQuery SQL.
-It was tested for BigQuery, respectively. 
+Allocation_Optimization_using_DHont.ipynb and Allocation_Optimization_using_DHont.sql are resource allocation that are implemented in Python and BigQuery SQL, respectively. 
 
 Problem statement:
 We gave three supermarket brands (for example, Lidl, Tesco and Asda) we denote them Shop 1, Shop 2 and Shop 3. They have branches in Camden, Ealing, Greenwich, Hounslow, Richmond upon Thames, Hammersmith and Fulham, Kensington and Chelsea and City of Westminster. They use two suppliers that have branches in the same London Boroughs, we have historical probability of item being in the given supplier branch of London Borough. We know how many items each supplier can deliver per days.
