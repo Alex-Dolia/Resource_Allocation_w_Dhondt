@@ -1,0 +1,7 @@
+Allocation_Optimization_using_DHont.ipynb and Allocation_Optimization_using_DHont.sql are resource allocation that implemented in Python and SQL for BigQuery.
+It was tested for BigQuery but it might work in other version of SQL.
+
+Problem statement:
+We gave three supermarket brands (for example, Lidl, Tesco and Asda) we denote them Shop 1, Shop 2 and Shop 3. They have branches in Camden, Ealing, Greenwich, Hounslow, Richmond upon Thames, Hammersmith and Fulham, Kensington and Chelsea and City of Westminster. They use two suppliers that have branches in the same London Boroughs, we have historical probability of item being in the given supplier branch of London Borough. We know how many items each supplier can deliver per days.
+
+We are given total number of items demanded by every supermarket brand and information about when (date) and where (London Borough) the given supermarket can accept part of this total demand but exact value is not provided. The supplier can deliver items to supermarkets from the same Borough only. We have weights or probability that total supply for the given location is going to a particular supermarket. The task is to find date, location and number of items should be delivered to all three supermarkets.
