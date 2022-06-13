@@ -1,0 +1,1286 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>Resource Allocation based on DHondt Method and BigQuery</title><style>
+/* cspell:disable-file */
+/* webkit printing magic: print all background colors */
+html {
+	-webkit-print-color-adjust: exact;
+}
+* {
+	box-sizing: border-box;
+	-webkit-print-color-adjust: exact;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+@media only screen {
+	body {
+		margin: 2em auto;
+		max-width: 900px;
+		color: rgb(55, 53, 47);
+	}
+}
+
+body {
+	line-height: 1.5;
+	white-space: pre-wrap;
+}
+
+a,
+a.visited {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.pdf-relative-link-path {
+	font-size: 80%;
+	color: #444;
+}
+
+h1,
+h2,
+h3 {
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	font-weight: 600;
+	margin-bottom: 0;
+}
+
+.page-title {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 0.75em;
+}
+
+h1 {
+	font-size: 1.875rem;
+	margin-top: 1.875rem;
+}
+
+h2 {
+	font-size: 1.5rem;
+	margin-top: 1.5rem;
+}
+
+h3 {
+	font-size: 1.25rem;
+	margin-top: 1.25rem;
+}
+
+.source {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 1.5em;
+	word-break: break-all;
+}
+
+.callout {
+	border-radius: 3px;
+	padding: 1rem;
+}
+
+figure {
+	margin: 1.25em 0;
+	page-break-inside: avoid;
+}
+
+figcaption {
+	opacity: 0.5;
+	font-size: 85%;
+	margin-top: 0.5em;
+}
+
+mark {
+	background-color: transparent;
+}
+
+.indented {
+	padding-left: 1.5em;
+}
+
+hr {
+	background: transparent;
+	display: block;
+	width: 100%;
+	height: 1px;
+	visibility: visible;
+	border: none;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+img {
+	max-width: 100%;
+}
+
+@media only print {
+	img {
+		max-height: 100vh;
+		object-fit: contain;
+	}
+}
+
+@page {
+	margin: 1in;
+}
+
+.collection-content {
+	font-size: 0.875rem;
+}
+
+.column-list {
+	display: flex;
+	justify-content: space-between;
+}
+
+.column {
+	padding: 0 1em;
+}
+
+.column:first-child {
+	padding-left: 0;
+}
+
+.column:last-child {
+	padding-right: 0;
+}
+
+.table_of_contents-item {
+	display: block;
+	font-size: 0.875rem;
+	line-height: 1.3;
+	padding: 0.125rem;
+}
+
+.table_of_contents-indent-1 {
+	margin-left: 1.5rem;
+}
+
+.table_of_contents-indent-2 {
+	margin-left: 3rem;
+}
+
+.table_of_contents-indent-3 {
+	margin-left: 4.5rem;
+}
+
+.table_of_contents-link {
+	text-decoration: none;
+	opacity: 0.7;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.18);
+}
+
+table,
+th,
+td {
+	border: 1px solid rgba(55, 53, 47, 0.09);
+	border-collapse: collapse;
+}
+
+table {
+	border-left: none;
+	border-right: none;
+}
+
+th,
+td {
+	font-weight: normal;
+	padding: 0.25em 0.5em;
+	line-height: 1.5;
+	min-height: 1.5em;
+	text-align: left;
+}
+
+th {
+	color: rgba(55, 53, 47, 0.6);
+}
+
+ol,
+ul {
+	margin: 0;
+	margin-block-start: 0.6em;
+	margin-block-end: 0.6em;
+}
+
+li > ol:first-child,
+li > ul:first-child {
+	margin-block-start: 0.6em;
+}
+
+ul > li {
+	list-style: disc;
+}
+
+ul.to-do-list {
+	text-indent: -1.7em;
+}
+
+ul.to-do-list > li {
+	list-style: none;
+}
+
+.to-do-children-checked {
+	text-decoration: line-through;
+	opacity: 0.375;
+}
+
+ul.toggle > li {
+	list-style: none;
+}
+
+ul {
+	padding-inline-start: 1.7em;
+}
+
+ul > li {
+	padding-left: 0.1em;
+}
+
+ol {
+	padding-inline-start: 1.6em;
+}
+
+ol > li {
+	padding-left: 0.2em;
+}
+
+.mono ol {
+	padding-inline-start: 2em;
+}
+
+.mono ol > li {
+	text-indent: -0.4em;
+}
+
+.toggle {
+	padding-inline-start: 0em;
+	list-style-type: none;
+}
+
+/* Indent toggle children */
+.toggle > li > details {
+	padding-left: 1.7em;
+}
+
+.toggle > li > details > summary {
+	margin-left: -1.1em;
+}
+
+.selected-value {
+	display: inline-block;
+	padding: 0 0.5em;
+	background: rgba(206, 205, 202, 0.5);
+	border-radius: 3px;
+	margin-right: 0.5em;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	white-space: nowrap;
+}
+
+.collection-title {
+	display: inline-block;
+	margin-right: 1em;
+}
+
+.simple-table {
+	margin-top: 1em;
+	font-size: 0.875rem;
+	empty-cells: show;
+}
+.simple-table td {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table th {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table-header-color {
+	background: rgb(247, 246, 243);
+	color: black;
+}
+.simple-table-header {
+	font-weight: 500;
+}
+
+time {
+	opacity: 0.5;
+}
+
+.icon {
+	display: inline-block;
+	max-width: 1.2em;
+	max-height: 1.2em;
+	text-decoration: none;
+	vertical-align: text-bottom;
+	margin-right: 0.5em;
+}
+
+img.icon {
+	border-radius: 3px;
+}
+
+.user-icon {
+	width: 1.5em;
+	height: 1.5em;
+	border-radius: 100%;
+	margin-right: 0.5rem;
+}
+
+.user-icon-inner {
+	font-size: 0.8em;
+}
+
+.text-icon {
+	border: 1px solid #000;
+	text-align: center;
+}
+
+.page-cover-image {
+	display: block;
+	object-fit: cover;
+	width: 100%;
+	max-height: 30vh;
+}
+
+.page-header-icon {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.page-header-icon-with-cover {
+	margin-top: -0.72em;
+	margin-left: 0.07em;
+}
+
+.page-header-icon img {
+	border-radius: 3px;
+}
+
+.link-to-page {
+	margin: 1em 0;
+	padding: 0;
+	border: none;
+	font-weight: 500;
+}
+
+p > .user {
+	opacity: 0.5;
+}
+
+td > .user,
+td > time {
+	white-space: nowrap;
+}
+
+input[type="checkbox"] {
+	transform: scale(1.5);
+	margin-right: 0.6em;
+	vertical-align: middle;
+}
+
+p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.image {
+	border: none;
+	margin: 1.5em 0;
+	padding: 0;
+	border-radius: 0;
+	text-align: center;
+}
+
+.code,
+code {
+	background: rgba(135, 131, 120, 0.15);
+	border-radius: 3px;
+	padding: 0.2em 0.4em;
+	border-radius: 3px;
+	font-size: 85%;
+	tab-size: 2;
+}
+
+code {
+	color: #eb5757;
+}
+
+.code {
+	padding: 1.5em 1em;
+}
+
+.code-wrap {
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.code > code {
+	background: none;
+	padding: 0;
+	font-size: 100%;
+	color: inherit;
+}
+
+blockquote {
+	font-size: 1.25em;
+	margin: 1em 0;
+	padding-left: 1em;
+	border-left: 3px solid rgb(55, 53, 47);
+}
+
+.bookmark {
+	text-decoration: none;
+	max-height: 8em;
+	padding: 0;
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+}
+
+.bookmark-title {
+	font-size: 0.85em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	height: 1.75em;
+	white-space: nowrap;
+}
+
+.bookmark-text {
+	display: flex;
+	flex-direction: column;
+}
+
+.bookmark-info {
+	flex: 4 1 180px;
+	padding: 12px 14px 14px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.bookmark-image {
+	width: 33%;
+	flex: 1 1 180px;
+	display: block;
+	position: relative;
+	object-fit: cover;
+	border-radius: 1px;
+}
+
+.bookmark-description {
+	color: rgba(55, 53, 47, 0.6);
+	font-size: 0.75em;
+	overflow: hidden;
+	max-height: 4.5em;
+	word-break: break-word;
+}
+
+.bookmark-href {
+	font-size: 0.75em;
+	margin-top: 0.25em;
+}
+
+.sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+.code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+.serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+.mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+.pdf .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK JP'; }
+.pdf:lang(zh-CN) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK SC'; }
+.pdf:lang(zh-TW) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK TC'; }
+.pdf:lang(ko-KR) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK KR'; }
+.pdf .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.pdf .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK JP'; }
+.pdf:lang(zh-CN) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK SC'; }
+.pdf:lang(zh-TW) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK TC'; }
+.pdf:lang(ko-KR) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK KR'; }
+.pdf .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.highlight-default {
+	color: rgba(55, 53, 47, 1);
+}
+.highlight-gray {
+	color: rgba(120, 119, 116, 1);
+	fill: rgba(120, 119, 116, 1);
+}
+.highlight-brown {
+	color: rgba(159, 107, 83, 1);
+	fill: rgba(159, 107, 83, 1);
+}
+.highlight-orange {
+	color: rgba(217, 115, 13, 1);
+	fill: rgba(217, 115, 13, 1);
+}
+.highlight-yellow {
+	color: rgba(203, 145, 47, 1);
+	fill: rgba(203, 145, 47, 1);
+}
+.highlight-teal {
+	color: rgba(68, 131, 97, 1);
+	fill: rgba(68, 131, 97, 1);
+}
+.highlight-blue {
+	color: rgba(51, 126, 169, 1);
+	fill: rgba(51, 126, 169, 1);
+}
+.highlight-purple {
+	color: rgba(144, 101, 176, 1);
+	fill: rgba(144, 101, 176, 1);
+}
+.highlight-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.highlight-red {
+	color: rgba(212, 76, 71, 1);
+	fill: rgba(212, 76, 71, 1);
+}
+.highlight-gray_background {
+	background: rgba(241, 241, 239, 1);
+}
+.highlight-brown_background {
+	background: rgba(244, 238, 238, 1);
+}
+.highlight-orange_background {
+	background: rgba(251, 236, 221, 1);
+}
+.highlight-yellow_background {
+	background: rgba(251, 243, 219, 1);
+}
+.highlight-teal_background {
+	background: rgba(237, 243, 236, 1);
+}
+.highlight-blue_background {
+	background: rgba(231, 243, 248, 1);
+}
+.highlight-purple_background {
+	background: rgba(244, 240, 247, 0.8);
+}
+.highlight-pink_background {
+	background: rgba(249, 238, 243, 0.8);
+}
+.highlight-red_background {
+	background: rgba(253, 235, 236, 1);
+}
+.block-color-default {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray {
+	color: rgba(120, 119, 116, 1);
+	fill: rgba(120, 119, 116, 1);
+}
+.block-color-brown {
+	color: rgba(159, 107, 83, 1);
+	fill: rgba(159, 107, 83, 1);
+}
+.block-color-orange {
+	color: rgba(217, 115, 13, 1);
+	fill: rgba(217, 115, 13, 1);
+}
+.block-color-yellow {
+	color: rgba(203, 145, 47, 1);
+	fill: rgba(203, 145, 47, 1);
+}
+.block-color-teal {
+	color: rgba(68, 131, 97, 1);
+	fill: rgba(68, 131, 97, 1);
+}
+.block-color-blue {
+	color: rgba(51, 126, 169, 1);
+	fill: rgba(51, 126, 169, 1);
+}
+.block-color-purple {
+	color: rgba(144, 101, 176, 1);
+	fill: rgba(144, 101, 176, 1);
+}
+.block-color-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.block-color-red {
+	color: rgba(212, 76, 71, 1);
+	fill: rgba(212, 76, 71, 1);
+}
+.block-color-gray_background {
+	background: rgba(241, 241, 239, 1);
+}
+.block-color-brown_background {
+	background: rgba(244, 238, 238, 1);
+}
+.block-color-orange_background {
+	background: rgba(251, 236, 221, 1);
+}
+.block-color-yellow_background {
+	background: rgba(251, 243, 219, 1);
+}
+.block-color-teal_background {
+	background: rgba(237, 243, 236, 1);
+}
+.block-color-blue_background {
+	background: rgba(231, 243, 248, 1);
+}
+.block-color-purple_background {
+	background: rgba(244, 240, 247, 0.8);
+}
+.block-color-pink_background {
+	background: rgba(249, 238, 243, 0.8);
+}
+.block-color-red_background {
+	background: rgba(253, 235, 236, 1);
+}
+.select-value-color-pink { background-color: rgba(245, 224, 233, 1); }
+.select-value-color-purple { background-color: rgba(232, 222, 238, 1); }
+.select-value-color-green { background-color: rgba(219, 237, 219, 1); }
+.select-value-color-gray { background-color: rgba(227, 226, 224, 1); }
+.select-value-color-opaquegray { background-color: rgba(255, 255, 255, 0.0375); }
+.select-value-color-orange { background-color: rgba(250, 222, 201, 1); }
+.select-value-color-brown { background-color: rgba(238, 224, 218, 1); }
+.select-value-color-red { background-color: rgba(255, 226, 221, 1); }
+.select-value-color-yellow { background-color: rgba(253, 236, 200, 1); }
+.select-value-color-blue { background-color: rgba(211, 229, 239, 1); }
+
+.checkbox {
+	display: inline-flex;
+	vertical-align: text-bottom;
+	width: 16;
+	height: 16;
+	background-size: 16px;
+	margin-left: 2px;
+	margin-right: 5px;
+}
+
+.checkbox-on {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22%2358A9D7%22%2F%3E%0A%3Cpath%20d%3D%22M6.71429%2012.2852L14%204.9995L12.7143%203.71436L6.71429%209.71378L3.28571%206.2831L2%207.57092L6.71429%2012.2852Z%22%20fill%3D%22white%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+
+.checkbox-off {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%2214.5%22%20height%3D%2214.5%22%20fill%3D%22white%22%20stroke%3D%22%2336352F%22%20stroke-width%3D%221.5%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+	
+</style></head><body><article id="93ba82c8-df3b-4dd1-a613-5019f6376897" class="page sans"><header><h1 class="page-title">Resource Allocation based on DHondt Method and BigQuery</h1></header><div class="page-body"><h1 id="3409ace8-5ee7-49ba-a99c-2e2657102598" class="">Problem statement:</h1><p id="5619d2ee-c7e3-43b1-a8e2-78dfc2073ad4" class="">We gave three supermarket brands (for example, Lidl, Tesco, and Asda) we denote them Shop 1, Shop 2, and Shop 3. They have branches in Camden, Ealing, Greenwich, Hounslow, Richmond upon Thames, Hammersmith and Fulham, Kensington and Chelsea, and the City of Westminster. They use two suppliers that have branches in the same London Boroughs, we have a historical probability of items being in the given supplier branch of London Borough. We know how many items each supplier can deliver per day.</p><p id="e63a6b2a-175e-4a0e-97f6-2bb127310393" class="">We are given a total number of items demanded by every supermarket brand and information about when (date) and where (London Borough) the given supermarket can accept part of this total demand but the exact value is not provided. The supplier can deliver items to supermarkets from the same Borough only. We have weights or a probability that the total supply for the given location is going to a particular supermarket. The task is to find the date, location, and number of items that should be delivered to all three supermarkets.</p><figure id="ad985476-2235-4b44-a363-11f91e1e6bc0" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled.png"><img style="width:1060px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled.png"/></a></figure><p id="d93efdc4-431c-4a81-8fe7-bd393ca3bef5" class="">We are given Demand Weights that could be weights of the objective function that are used in linear programming:</p><p id="2bb6603f-1e76-4d14-9f1d-4d674f03c34b" class=""><strong>Table 1</strong> Demand Weights defined by Optimization Objective in Linear Programming</p><figure id="064b52dc-3f6a-45bf-a6f9-92ec24bc1c13" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%201.png"><img style="width:193px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%201.png"/></a></figure><p id="836d249b-8f45-4c02-a362-03c4256f99dc" class="">The table below shows how many items are required by every supermarket in all considered locations during two days:</p><p id="7a5c710a-fad9-4717-b7c9-80585b4f73f4" class=""><strong>Table 2</strong> Total Number of Demanded Items per Time Interval (2 days in our case)</p><figure id="7915ca4a-3358-4575-8e62-12d5d2ce9e6c" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%202.png"><img style="width:182px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%202.png"/></a></figure><p id="02ddd09e-4acd-4e8e-8041-73723dc4e01d" class="">Information about when (date) and where (London Borough) the given supermarket is available to accept part of the above total demand (see the table called Shop_Demand above) but how much it will accept it depends on the supply ib the given Borough and Demand Weights.
+If it is &quot;+&quot; (True) then the supermarket is available to accept the items on the particular date and London Borough (location) and it does not accept otherwise (when it is &quot;-&quot; or False:</p><p id="3756f7fd-2552-4572-994b-4cf257a0dd70" class=""><strong>Table 3</strong> Shop Demand Availability or Schedule when Shops update their Stocks </p><figure id="4c8b2c2f-d245-4146-a07a-4738aa53c528" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%203.png"><img style="width:528px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%203.png"/></a></figure><p id="3390d8f8-50e1-4c6d-9adb-50af6a51fded" class="">The information about Supply includes the probability of supply over different London Borough (location) and the daily total amount of the supplied items (see Table below).
+The probability could be different for the different suppliers but in our example, it is the same for simplicity of presentation:</p><p id="e21a81bc-86ea-4953-b700-1164cabcf76c" class=""><strong>Table 4</strong> Supply Items Availability</p><figure id="38045c50-9079-44df-8273-7f65d35e0718" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%204.png"><img style="width:656px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%204.png"/></a></figure><p id="2850d355-d586-4e34-9a81-febb29521e97" class="">
+</p><p id="56a6af28-15f1-4829-a2b9-bdb0834e0e0f" class="">The algorithm consists of 3 major steps:</p><p id="917bf635-cbb3-40ec-bb15-4b79a8671cc7" class=""><strong>STEP 1</strong>. Computation of the number of supplied items per day, Borough, and supplier given the probability of supply over different Boroughs and the total number of supplied items per day and supplier. In the simplest case, we just multiply the probability of items distributed to a given Borough by the total number of supplied items per day, and supplier. But sometimes we get no integer numbers after this multiplication that is why we apply DHondt method instead. For example, given date 11/06/2022 and supplier 1 (see Table 4) we have the total amount of items available equal to 255 and the following vector of probabilities: <code>[0.118, 0.157, 0.118, 0.220, 0.078, 0.192, 0.039, 0.078]</code>over London Boroughs. This information is required by DHondt method to find the number of items that can be supplied on 11/06/2022 by Supplier 1 to each London Borough. Therefore, for every combination  of date and supply we need to run DHondt method or 4 times in our case (see Quantity column in Table 5).  </p><p id="28d8dd83-0dc4-4958-800a-dc3bddb7def9" class=""><strong>Table 5</strong> Supply Information with estimated “Quantity” and “ALL” Columns </p><figure id="96845fcf-02e9-4b1d-b1c7-ee1788561956" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%205.png"><img style="width:839px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%205.png"/></a></figure><p id="c2b12d76-a49d-4cc7-ba87-8fcb4f905cb1" class=""><strong>STEP 2</strong>. Calculation of the maximum demand that can be satisfied or supplied.  Using demand weights, demand availability, and the total possible number of supplied items per day and Borough (see 1) )  we compute how many items can be supplied given day, Borough, and shop.  Therefore, we find the maximum number of items that the shop located in the corresponding London Borough can get on the given date. In order to find it we first multiply every row of Shop Demand Availability (see Table 3, where “+” can be interpreted as 1 and “-” as 0) by Demand Weights and normalise every row of the result in such a way that weights in the row sum to 1. Then using this row normalised weights and the total possible supplied in the given London Borough and date we calculate the number of the items that can be delivered to the corresponding shop on the given date and London Borough. We can apply DHondt method again - we need to run it 16 times for every combination of date and London Borough, the output of the DHondt in this case is the number of items (in our case, the output is a vector of three values - one value per shop) for the corresponding shop given date and London Borough (see Table 6). Then we aggregate the number of items over all dates and London Borough for every shop. Therefore, we get the number of items that suppliers can provide to the corresponding entire supermarket network for all location and dates. then we compare these numbers with Shop Demand (see Table 2) and for every shop choose the smallest number (see Table 7). Therefore, we find the number of items that are required by the shops and can be delivered by suppliers subject to constrain (see Table 1-4) over all days (in our case two days) and London Borough (we selected eight London Boroughs).   </p><p id="7d1b5abd-e111-4ddc-9238-c8a6c9268649" class=""><strong>Table 6 Distribution of Number of Available for Supply Items over Shops given Date and London Borough (see Supply AS Demand in red colour)</strong></p><figure id="66e6aadd-c52d-4aa7-8d86-ae86fec36e27" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%206.png"><img style="width:1065px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%206.png"/></a></figure><p id="c4cf19fa-800d-445b-b5cf-45b92baccbf5" class=""><strong>Table 7</strong> Available Demand Calculation</p><figure id="b4e0bf60-29b8-41f1-bc26-e2a072f59bd7" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%207.png"><img style="width:360px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%207.png"/></a></figure><p id="ca20d745-08f6-45cc-ade6-8ba7749be815" class="">
+</p><p id="76dda1a4-a984-4c56-add4-2c821f6f3ba7" class=""><strong>STEP 3</strong>.  Find weights for each shop using the corresponding column of Supply AS Demand (see Table 6) that is divided the corresponding total (for example, the total equal to 210, 315 and 600 for shop 1, 2 and 3, respectively, see Table 6). As a result we get “Column Normalise Weight” (see Table 8). After this we can multiply every column of “Column Normalised Weight” (see Table 8) that corresponds to the given shop by the corresponding value of “Available Demand” (see Table 7) to get the final allocation. As we mentioned before this approach give some float numbers therefore instead we apply DHondt method to every column of “Column Normalised Weight” (see Table 8) using the corresponding value of Available Demand (see Table 7). In our case we have three shops therefore we apply DHondt method three times and we get “Final Allocation” (see Table 8). Please note that, the following implementation in BigQuery gives slightly different numbers than what we get in Table 8 but it can be explained by difference in Python and BigQuery DHondt method implementations.</p><p id="bcc502ff-72dd-4fd6-bf77-e062e940053d" class="">Table 8</p><figure id="3cc882f6-a8fc-4eb1-9970-e3f5b5ef7c61" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%208.png"><img style="width:905px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%208.png"/></a></figure><p id="edf06b61-57c7-4e4a-9c3b-64294c23c8bd" class="">Our BigQuery implementation of DHondt algorithm was inspired by the following Python implementation:</p><pre id="635ba15d-02a4-4f87-9dbb-ebdf0b965c9d" class="code"><code>def DHondt_AD_v2(nSeats: int, weights: np.ndarray) -&gt; np.ndarray:
+    # 
+    if nSeats == 0:
+       seats = np.arrasy([0] * len(weights))
+    else: 
+       quota = sum(weights) / (1 + nSeats)
+       frac = [weight / quota for weight in weights]
+       seats = np.floor(frac).astype(int)
+       #
+       n = nSeats - sum(seats)  # number of seats remaining to allocate 
+       #
+       if n &lt; 0: # we over allocate by 1 seat
+          # I modified over allocation case - it could over allocate only by 1 seat
+          min_weights = np.min(weights[np.nonzero(seats)]) 
+          # find smallest weight where seats is non zero
+          index = np.argmax(weights == min_weights)      
+          # find smallest index for min_weights 
+          seats[index] -= 1                      # 
+       elif n &gt; 0: # We under allocate by n seats after initial allocation
+            #
+            # distribute the remaining number of seats to the elements of seats array 
+            # with the largest remainder
+            remainders = frac - seats
+            #
+            n = int(n)
+            # Find poistion of the first n largest reminders
+            # in order to increase the number of seats
+            index = np.argsort(remainders)[::-1][:n]
+            #  
+            for i in index:
+                seats[i] += 1
+    #
+    return seats
+#
+print(&quot;OK&quot;)</code></pre><p id="66758016-855a-459a-a431-d9c17a2ccfa1" class="">
+</p><h2 id="8de79422-488b-4d28-8cd0-139187226654" class="">1. Inputs Definition</h2><p id="5b5bc0fc-afcf-44c0-96a1-6896ba76c2b6" class="">
+</p><p id="615a2022-cd21-470f-b917-b3bd6d1436e7" class="">In this section we define inputs that illustrate our implementation of resource allocation algorithm (see Table 1-4 above).</p><pre id="cfd663c1-0d47-4d35-9775-6eda2edb53e4" class="code"><code>demand_weight AS (
+      SELECT  &#x27;shop_1&#x27; AS shop, 0.2 AS demand_weight UNION ALL
+      SELECT  &#x27;shop_2&#x27;,         0.3                  UNION ALL
+      SELECT  &#x27;shop_3&#x27;,         0.5 
+)</code></pre><p id="ba26f349-d816-4af7-810c-f853c13d3c5b" class="">
+</p><figure id="2041aea9-642d-4295-80c3-7ba12d995138" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%209.png"><img style="width:221px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%209.png"/></a></figure><p id="b305e940-3ee4-41c3-a81b-7cc2df427764" class="">
+</p><pre id="ae3d8edb-5dd6-4f53-bd9a-d98174a0cb8c" class="code"><code>shop_demand   AS(
+      SELECT  &#x27;shop_1&#x27; AS shop, 150 AS demand_quantity UNION ALL
+      SELECT  &#x27;shop_2&#x27;,         500                    UNION ALL
+      SELECT  &#x27;shop_3&#x27;,         300
+)</code></pre><p id="d798b4ef-c64f-46fa-9bd7-d34e19d87647" class="">
+</p><figure id="f18cee38-a6a4-455b-af42-b567d475d8ae" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2010.png"><img style="width:222px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2010.png"/></a></figure><p id="4052ee3b-40ac-4310-8c9f-d98861f7dd17" class="">
+</p><pre id="5060390a-aa8a-4626-a9ee-5ad6994cf239" class="code"><code>demand AS (
+      SELECT &#x27;11/06/2022&#x27; AS day, &#x27;Camden&#x27;                 AS London_Borough,	
+              False AS Shop_1,	False AS Shop_2,	False  AS Shop_3 UNION ALL
+      SELECT &#x27;11/06/2022&#x27; AS day, &#x27;Ealing&#x27;                 AS London_Borough,	
+              False AS Shop_1,	False AS Shop_2,	True   AS Shop_3 UNION ALL
+      SELECT &#x27;11/06/2022&#x27; AS day, &#x27;Greenwich&#x27;              AS London_Borough,	
+              False AS Shop_1,	True  AS Shop_2,	False  AS Shop_3 UNION ALL
+      SELECT &#x27;11/06/2022&#x27; AS day, &#x27;Hounslow&#x27;               AS London_Borough,	
+              False AS Shop_1,	True  AS Shop_2,	True   AS Shop_3 UNION ALL
+      SELECT &#x27;11/06/2022&#x27; AS day, &#x27;Richmond upon Thames&#x27;   AS London_Borough,	
+              True  AS Shop_1,  False AS Shop_2,	False  AS Shop_3 UNION ALL
+      SELECT &#x27;11/06/2022&#x27; AS day, &#x27;Hammersmith and Fulham&#x27; AS London_Borough,	
+              True  AS Shop_1,	False AS Shop_2,	True   AS Shop_3 UNION ALL
+      SELECT &#x27;11/06/2022&#x27; AS day, &#x27;Kensington and Chelsea&#x27; AS London_Borough,
+            	True  AS Shop_1,	True  AS Shop_2,	False  AS Shop_3 UNION ALL
+      SELECT &#x27;11/06/2022&#x27; AS day, &#x27;City of Westminster&#x27;    AS London_Borough,	
+              True  AS Shop_1,	True  AS Shop_2,	True   AS Shop_3 UNION ALL
+      SELECT &#x27;12/06/2022&#x27; AS day, &#x27;Camden&#x27;                 AS London_Borough,	
+              False AS Shop_1,	False AS Shop_2,	False  AS Shop_3 UNION ALL
+      SELECT &#x27;12/06/2022&#x27; AS day, &#x27;Ealing&#x27;                 AS London_Borough,	
+              False AS Shop_1,	False AS Shop_2,	True   AS Shop_3 UNION ALL
+      SELECT &#x27;12/06/2022&#x27; AS day, &#x27;Greenwich&#x27;              AS London_Borough,	
+              False AS Shop_1,	True  AS Shop_2,	False  AS Shop_3 UNION ALL
+      SELECT &#x27;12/06/2022&#x27; AS day, &#x27;Hounslow&#x27;               AS London_Borough,	
+              False AS Shop_1,	True  AS Shop_2,	True   AS Shop_3 UNION ALL
+      SELECT &#x27;12/06/2022&#x27; AS day, &#x27;Richmond upon Thames&#x27;   AS London_Borough,	
+              True  AS Shop_1,	False AS Shop_2,	False  AS Shop_3 UNION ALL
+      SELECT &#x27;12/06/2022&#x27; AS day, &#x27;Hammersmith and Fulham&#x27; AS London_Borough,	
+              True  AS Shop_1,	False AS Shop_2,	True   AS Shop_3 UNION ALL
+      SELECT &#x27;12/06/2022&#x27; AS day, &#x27;Kensington and Chelsea&#x27; AS London_Borough,	
+              True  AS Shop_1,	True  AS Shop_2,	False  AS Shop_3 UNION ALL
+      SELECT &#x27;12/06/2022&#x27; AS day, &#x27;City of Westminster&#x27;    AS London_Borough,	
+              True  AS Shop_1,	True  AS Shop_2,	True   AS Shop_3 
+)</code></pre><p id="13cdff85-76b1-4490-a76b-2c8b6c25abf7" class="">
+</p><p id="7d4681fb-9227-4cf6-b091-fc26e7a89b01" class="">
+</p><figure id="6c540417-70e2-42a6-97e0-b33d0ea8d8ae" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2011.png"><img style="width:496px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2011.png"/></a></figure><p id="7cf9178d-9a25-4858-bbba-c33f30ae2681" class="">
+</p><pre id="eba8abe9-a2a4-4f30-9115-9b825fdb37ae" class="code"><code>-- SUPPLY
+prob_of_supply_per_borough AS (
+SELECT &#x27;Camden&#x27;                 AS London_Borough, 0.118 AS supplier_1,
+                                                   0.118 AS supplier_2 UNION ALL
+SELECT &#x27;Ealing&#x27;                 AS London_Borough, 0.157 AS supplier_1,
+                                                   0.157 AS supplier_2 UNION ALL
+SELECT &#x27;Greenwich&#x27;              AS London_Borough, 0.118 AS supplier_1, 
+                                                   0.118 AS supplier_2 UNION ALL
+SELECT &#x27;Hounslow&#x27;               AS London_Borough, 0.220 AS supplier_1, 
+                                                   0.220 AS supplier_2 UNION ALL
+SELECT &#x27;Richmond upon Thames&#x27;   AS London_Borough, 0.078 AS supplier_1, 
+                                                   0.078 AS supplier_2 UNION ALL
+SELECT &#x27;Hammersmith and Fulham&#x27; AS London_Borough, 0.192 AS supplier_1, 
+                                                   0.192 AS supplier_2 UNION ALL
+SELECT &#x27;Kensington and Chelsea&#x27; AS London_Borough, 0.039 AS supplier_1, 
+                                                   0.039 AS supplier_2 UNION ALL
+SELECT &#x27;City of Westminster&#x27;    AS London_Borough, 0.078 AS supplier_1, 
+                                                   0.078 AS supplier_2
+)</code></pre><p id="9a75f57b-32a8-4bb7-956c-66088693a65c" class="">
+</p><figure id="775f9e33-ace3-4300-b256-86b511706be3" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2012.png"><img style="width:364px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2012.png"/></a></figure><p id="838ca737-2c71-4610-aeb7-5c7ce15e15b8" class="">
+</p><pre id="85b4610d-daf0-498f-b8ed-aa29eb3ebb75" class="code"><code>daily_total_supplied_quantity AS(
+SELECT &#x27;11/06/2022&#x27; AS day, 255 AS supplier_1, 255 AS supplier_2 UNION ALL 
+SELECT &#x27;12/06/2022&#x27; AS day, 510 AS supplier_1, 255 AS supplier_2 
+)</code></pre><p id="1c6778e6-7d0c-4e2a-98bb-56ff62c20ac0" class="">
+</p><figure id="a8af8d02-094a-4b51-bd13-85dd6317cf50" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2013.png"><img style="width:287px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2013.png"/></a></figure><h2 id="c20545d0-1bf3-4047-94b6-b63d80d6b894" class="">2. Daily Supplier Quantity per Day, Borough, and Supplier by DHondt</h2><p id="6ae72ce4-6200-474e-a520-085e5e7402ae" class="">The output of this section is the column “daily_supplier_allocation” in the table called final_step_of_DHondt_daily_supplier (see column called <code>Quantity</code> in Table 5 above).</p><pre id="6377c687-ac20-4fc9-83aa-aa44f52691c9" class="code"><code>un_pivot_prob_of_supply_per_borough AS (
+SELECT London_Borough, supplier, probability FROM prob_of_supply_per_borough
+UNPIVOT(probability FOR supplier IN (supplier_1, supplier_2))
+)</code></pre><p id="cc3b689b-bacd-46cf-a103-3f27ec5cdbfb" class="">
+</p><figure id="1c433bc0-f2ed-4f59-9807-9492063070b7" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2014.png"><img style="width:654px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2014.png"/></a></figure><p id="8d35eb5f-5be0-44ae-a19c-ba43a674e0ef" class="">
+</p><pre id="acf8f7bb-a7c6-49ae-b019-0306c9c77beb" class="code"><code>un_pivot_daily_total_supplied_quantity AS (
+SELECT day, supplier, quantity FROM daily_total_supplied_quantity
+UNPIVOT(quantity FOR supplier IN (supplier_1, supplier_2))
+)</code></pre><p id="77108a40-ac87-4a39-b395-29e0cfe3292a" class="">
+</p><figure id="801df184-2b3e-47af-8ae4-d16482c91a5e" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2015.png"><img style="width:505px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2015.png"/></a></figure><p id="bf10d742-6b33-4989-b89c-825af2bedd53" class="">
+</p><pre id="fae436ca-9d53-48be-b9c9-ac84099c745f" class="code"><code>-- START DHondt_daily_supplier
+initial_step_of_DHondt_daily_supplier AS
+(
+SELECT day, 
+       London_Borough,  
+       d.supplier, 
+       probability, 
+       quantity, 
+       probability * (quantity + 1)        AS fraction,
+       FLOOR(probability * (quantity + 1)) AS res,
+
+       SUM( FLOOR(probability * (quantity + 1)) ) OVER (PARTITION BY day, d.supplier)  
+            AS total_res,
+       quantity	-  
+            SUM( FLOOR(probability * (quantity + 1)) ) 
+            OVER (PARTITION BY day, d.supplier)  AS n, 
+       ROW_NUMBER() OVER (
+                    PARTITION BY day, d.supplier 
+                    ORDER BY (       probability * (quantity + 1) - 
+                               FLOOR(probability * (quantity + 1)) ) DESC) 
+                    AS th_largest_reminder, 
+       ROW_NUMBER() OVER (
+                    PARTITION BY day, 
+                    d.supplier ORDER BY probability)
+                    AS smallest_weight
+FROM un_pivot_daily_total_supplied_quantity AS d
+INNER JOIN un_pivot_prob_of_supply_per_borough AS p ON d.supplier = p.supplier
+),
+final_step_of_DHondt_daily_supplier as (
+SELECT *, 
+       CAST(CASE WHEN (n = -1) AND (smallest_weight      = 1) THEN res - 1
+                 WHEN (n &gt;  0) AND (th_largest_reminder &lt;= n) THEN res + 1
+                 ELSE res
+            END AS INT64) AS daily_supplier_allocation
+FROM initial_step_of_DHondt_daily_supplier
+),
+-- END   DHondt_daily_supplier</code></pre><p id="c6f40ef5-e40f-465f-94ca-ea1c9d87960b" class="">
+</p><figure id="393f7f22-8a8c-4d96-b645-44dd99cfa2bc" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2016.png"><img style="width:1226px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2016.png"/></a></figure><figure id="17849acf-0887-47f6-9854-ec60c146d99f" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2017.png"><img style="width:1231px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2017.png"/></a></figure><h2 id="10db6231-2254-4342-8244-358a35904317" class="">3. Row Normalised Shop Weights per Day, Borough, and Shop  </h2><p id="56295b2f-43f2-423f-9ab3-6fa4594a5445" class="">In this section we compute <code>Row Normalised Weight</code> (see Table 6) that we need to compute the number of items supplier can provide to the given shop, date and London Borough.</p><pre id="f1062d74-dfd3-4a9c-a387-1aa3d1bc2e9b" class="code"><code>un_pivot_demand AS (
+SELECT day, London_Borough, shop, indicator FROM demand
+UNPIVOT(indicator FOR shop IN (shop_1, shop_2, shop_3))
+)</code></pre><p id="5b7dc471-7560-4272-bb37-53e68c6fdee6" class="">
+</p><figure id="8c09bdb3-2504-480a-a03e-523a509805b0" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2018.png"><img style="width:336px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2018.png"/></a></figure><p id="28aa3a3b-7bfb-482b-8eae-d2ecf501d775" class="">
+</p><pre id="56d02eeb-0794-4ee3-b374-fd38bca07e9b" class="code"><code>deman_weight_un_pivot_demand AS (
+SELECT day,	
+       London_Borough,	
+       u.shop,	
+       indicator,	
+       demand_weight,
+       CASE WHEN indicator THEN demand_weight ELSE 0 END AS indicator_weight,
+
+FROM un_pivot_demand AS u
+INNER JOIN demand_weight AS d ON d.shop=u.shop
+)</code></pre><p id="77a44b84-7ac2-4933-bfaa-89a2a367b233" class="">
+</p><figure id="38383d6c-b1d1-4563-8b67-acf6e7083e59" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2019.png"><img style="width:485px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2019.png"/></a></figure><p id="80ad6d96-e593-44d0-adad-011005dbba92" class="">
+</p><pre id="88add987-2db8-41ef-a0c9-75e07d691901" class="code"><code>row_normalised_deman_weight_un_pivot_demand AS (
+ SELECT
+       day,	
+       London_Borough,	
+       shop,	
+       indicator,	
+       demand_weight,
+       indicator_weight,
+       CASE WHEN SUM(indicator_weight) OVER(PARTITION BY day,	London_Borough) &gt; 0 
+                 THEN indicator_weight / SUM(indicator_weight) 
+                                         OVER(PARTITION BY day,	London_Borough) 
+                 ELSE 0
+       END AS row_normalise_weight 
+FROM deman_weight_un_pivot_demand
+WHERE indicator_weight &gt; 0
+)</code></pre><p id="32ba66df-c4d3-47ac-91d8-884c4f874ce5" class="">
+</p><figure id="71b6772d-9176-4bbd-ac11-46a4cebff48f" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2020.png"><img style="width:836px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2020.png"/></a></figure><h2 id="cb85b536-465e-4879-a18d-6140b49e454c" class="">4. Available Demand</h2><p id="b86a670d-0dee-4459-82cb-73607d34f038" class="">In this section we compute <code>Supply AS Demand</code> (see Table 6) and <code>Avalaible Demand</code> (see Table 7).</p><pre id="70fbfc8c-5b77-43f9-b136-afbe216d4235" class="code"><code>-- START DHondt_supply_AS_demand
+initial_step_of_DHondt_supply_AS_demand AS (
+SELECT
+       r.day,
+       r.London_Borough,	
+       shop,	
+       row_normalise_weight,
+       daily_supplier_allocation, 
+
+
+       row_normalise_weight * (daily_supplier_allocation + 1)        AS fraction,
+       FLOOR(row_normalise_weight * (daily_supplier_allocation + 1)) AS res,
+
+       SUM( FLOOR(row_normalise_weight * (daily_supplier_allocation + 1)) )
+            OVER (PARTITION BY r.day, r.London_Borough) AS total_res,
+       daily_supplier_allocation	-  
+            SUM( FLOOR(row_normalise_weight * (daily_supplier_allocation + 1)) ) 
+                 OVER (PARTITION BY r.day, r.London_Borough)  AS n, 
+       ROW_NUMBER() OVER (
+                    PARTITION BY r.day, r.London_Borough 
+                    ORDER BY ( row_normalise_weight * (daily_supplier_allocation + 1) - 
+                    FLOOR(row_normalise_weight * (daily_supplier_allocation + 1)) ) DESC)
+                    AS th_largest_reminder, 
+       ROW_NUMBER() OVER (PARTITION BY r.day, r.London_Borough 
+                          ORDER BY row_normalise_weight) AS smallest_weight
+FROM row_normalised_deman_weight_un_pivot_demand AS r
+INNER JOIN (
+              SELECT  day,	
+                      London_Borough,
+                      SUM(daily_supplier_allocation) AS daily_supplier_allocation
+              FROM final_step_of_DHondt_daily_supplier
+              GROUP BY day, London_Borough
+           ) as s ON r.day = s.day AND r.London_Borough = s.London_Borough 
+WHERE row_normalise_weight &gt; 0
+),
+final_step_of_DHondt_supply_AS_demand  as (
+SELECT *, 
+       CAST(CASE WHEN (n = -1) AND (smallest_weight      = 1) THEN res - 1
+                 WHEN (n &gt;  0) AND (th_largest_reminder &lt;= n) THEN res + 1
+                 ELSE res
+            END AS INT64) AS allocation
+FROM initial_step_of_DHondt_supply_AS_demand
+ORDER BY day,	London_Borough, shop
+),
+-- END DHondt_supply_AS_demand</code></pre><p id="40a8ce95-860e-48c2-ad4e-a1456217945a" class="">
+</p><figure id="244817cf-f4aa-49d9-b524-adbefd648ba9" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2021.png"><img style="width:1294px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2021.png"/></a></figure><p id="64ff747c-df38-49c1-beab-43958a96108c" class="">
+</p><pre id="0535f45f-72fc-47cf-9224-601b28fea99a" class="code"><code>available_demand AS (
+SELECT
+       s.shop,
+       demand_quantity,
+       supply_quantity,
+       CASE WHEN demand_quantity &lt; supply_quantity 
+                 THEN demand_quantity
+                 ELSE supply_quantity
+       END  AS available_demand
+FROM  shop_demand as s
+INNER JOIN ( 
+              SELECT 
+                      shop,
+                      SUM(allocation) AS supply_quantity
+              FROM final_step_of_DHondt_supply_AS_demand
+              GROUP BY shop 
+   
+           ) AS f ON s.shop = f.shop 
+)</code></pre><p id="519841f1-f093-4a98-a2e9-0c38baad7c51" class="">
+</p><figure id="1dbc39bd-0ea6-467e-819c-cd2ecebbc36b" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2022.png"><img style="width:451px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2022.png"/></a></figure><h2 id="231d36e4-ac30-4568-ba00-6c18f957c1d2" class="">5. Final Allocation by DHondt</h2><p id="d34feb0c-3074-4f41-a174-5d510291e09f" class="">It is the final section where compute the output similar to “<code>Final Allocation</code>&quot; (see Table 8).</p><pre id="6e6799f1-f129-4f47-9ecc-ee78e294e8ed" class="code"><code>pre_final AS
+(
+    SELECT 
+            day,
+            London_Borough,	
+            f.shop,	
+            allocation * 1.0 / SUM(allocation) 
+                               OVER(PARTITION BY f.shop) AS column_normalised_weight, 
+            available_demand
+    FROM  final_step_of_DHondt_supply_AS_demand AS f
+    INNER JOIN available_demand  AS a on f.shop = a.shop
+)</code></pre><p id="edd1a5bc-ffa6-4143-9b5d-f2a7086be935" class="">
+</p><figure id="ee63741f-0983-4aa6-ac7b-2f891ada44b5" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2023.png"><img style="width:690px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2023.png"/></a></figure><p id="03c81e9e-59e5-43af-a92b-74f851d51540" class="">
+</p><pre id="e813e3f2-6721-44ad-8c0f-8d10109bab49" class="code"><code>-- START DHondt_final
+initial_step_of_DHondt_final AS (
+SELECT
+       day,
+       London_Borough,	
+       shop,	
+       column_normalised_weight,
+       available_demand, 
+
+       column_normalised_weight * (available_demand + 1)           AS fraction,
+       FLOOR( column_normalised_weight * (available_demand + 1)  ) AS res,
+
+       SUM( FLOOR( column_normalised_weight * (available_demand + 1)) )
+            OVER (PARTITION BY shop) AS total_res,
+       available_demand	-  
+            SUM( FLOOR( column_normalised_weight * (available_demand + 1)) ) 
+            OVER (PARTITION BY shop)   AS n, 
+       ROW_NUMBER() OVER (
+                    PARTITION BY shop 
+                    ORDER BY ( column_normalised_weight * (available_demand + 1) -
+                    FLOOR(  column_normalised_weight * (available_demand + 1)  )) DESC) 
+                    AS th_largest_reminder, 
+       ROW_NUMBER() OVER (
+                    PARTITION BY shop 
+                    ORDER BY column_normalised_weight)
+                    AS smallest_weight
+FROM pre_final
+),
+final_step_of_DHondt_final  as (
+SELECT *, 
+       CAST(CASE WHEN (n = -1) AND (smallest_weight      = 1) THEN res - 1
+                 WHEN (n &gt;  0) AND (th_largest_reminder &lt;= n) THEN res + 1
+                 ELSE res
+            END AS INT64) AS allocation
+FROM initial_step_of_DHondt_final
+),
+-- END DHondt_final</code></pre><p id="875083be-c140-4879-b5a6-8e39baed673b" class="">
+</p><figure id="94f0da2c-9107-435b-89cd-21796481b23c" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2024.png"><img style="width:1206px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2024.png"/></a></figure><p id="ce5dc620-738c-4f93-b8ad-5d3535b6a440" class="">
+</p><pre id="c35662d3-8c44-4f57-891e-1c6d51f18f95" class="code"><code>pivot_final AS(
+SELECT day,	
+       London_Borough,	
+       IFNULL(CAST(allocation_shop_1 AS INT64), 0)	AS allocation_shop_1,
+       IFNULL(CAST(allocation_shop_2 AS INT64), 0) AS allocation_shop_2,
+       IFNULL(CAST(allocation_shop_3 AS INT64), 0) AS allocation_shop_3 
+FROM
+(
+  -- #1 from_item
+  SELECT 
+    day,
+    London_Borough,
+    shop,
+    CAST(allocation AS INT64) AS allocation
+  FROM final_step_of_DHondt_final
+)
+PIVOT
+(
+  -- #2 aggregate
+  AVG(allocation) AS allocation
+  -- #3 pivot_column
+  FOR shop in (&#x27;shop_1&#x27;, &#x27;shop_2&#x27;, &#x27;shop_3&#x27;)
+)
+ORDER BY day, London_Borough
+)</code></pre><p id="49132791-8de1-4508-9971-6c4110307cee" class="">
+</p><figure id="25230147-cd2c-481d-9151-f433fc1bf604" class="image"><a href="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2025.png"><img style="width:663px" src="Resource%20Allocation%20based%20on%20DHondt%20Method%20and%20Big%20ad98547622354b44a36311f91e1e6bc0/Untitled%2025.png"/></a></figure><p id="b8618333-a1c1-4d4f-a46f-757882db0073" class="">
+</p><pre id="b4111378-00e8-4482-be7e-3bf0acb677d7" class="code"><code>WITH  
+demand_weight AS (
+      SELECT  &#x27;shop_1&#x27; AS shop, 0.2 AS demand_weight UNION ALL
+      SELECT  &#x27;shop_2&#x27;,         0.3                  UNION ALL
+      SELECT  &#x27;shop_3&#x27;,         0.5 
+),
+shop_demand   AS(
+      SELECT  &#x27;shop_1&#x27; AS shop, 150 AS demand_quantity UNION ALL
+      SELECT  &#x27;shop_2&#x27;,         500                    UNION ALL
+      SELECT  &#x27;shop_3&#x27;,         300
+),
+demand AS (
+      SELECT &#x27;11/06/2022&#x27; AS day, &#x27;Camden&#x27;                 AS London_Borough,	
+              False AS Shop_1,	False AS Shop_2,	False  AS Shop_3 UNION ALL
+      SELECT &#x27;11/06/2022&#x27; AS day, &#x27;Ealing&#x27;                 AS London_Borough,	
+              False AS Shop_1,	False AS Shop_2,	True   AS Shop_3 UNION ALL
+      SELECT &#x27;11/06/2022&#x27; AS day, &#x27;Greenwich&#x27;              AS London_Borough,	
+              False AS Shop_1,	True  AS Shop_2,	False  AS Shop_3 UNION ALL
+      SELECT &#x27;11/06/2022&#x27; AS day, &#x27;Hounslow&#x27;               AS London_Borough,	
+              False AS Shop_1,	True  AS Shop_2,	True   AS Shop_3 UNION ALL
+      SELECT &#x27;11/06/2022&#x27; AS day, &#x27;Richmond upon Thames&#x27;   AS London_Borough,	
+              True  AS Shop_1,  False AS Shop_2,	False  AS Shop_3 UNION ALL
+      SELECT &#x27;11/06/2022&#x27; AS day, &#x27;Hammersmith and Fulham&#x27; AS London_Borough,	
+              True  AS Shop_1,	False AS Shop_2,	True   AS Shop_3 UNION ALL
+      SELECT &#x27;11/06/2022&#x27; AS day, &#x27;Kensington and Chelsea&#x27; AS London_Borough,
+            	True  AS Shop_1,	True  AS Shop_2,	False  AS Shop_3 UNION ALL
+      SELECT &#x27;11/06/2022&#x27; AS day, &#x27;City of Westminster&#x27;    AS London_Borough,	
+              True  AS Shop_1,	True  AS Shop_2,	True   AS Shop_3 UNION ALL
+      SELECT &#x27;12/06/2022&#x27; AS day, &#x27;Camden&#x27;                 AS London_Borough,	
+              False AS Shop_1,	False AS Shop_2,	False  AS Shop_3 UNION ALL
+      SELECT &#x27;12/06/2022&#x27; AS day, &#x27;Ealing&#x27;                 AS London_Borough,	
+              False AS Shop_1,	False AS Shop_2,	True   AS Shop_3 UNION ALL
+      SELECT &#x27;12/06/2022&#x27; AS day, &#x27;Greenwich&#x27;              AS London_Borough,	
+              False AS Shop_1,	True  AS Shop_2,	False  AS Shop_3 UNION ALL
+      SELECT &#x27;12/06/2022&#x27; AS day, &#x27;Hounslow&#x27;               AS London_Borough,	
+              False AS Shop_1,	True  AS Shop_2,	True   AS Shop_3 UNION ALL
+      SELECT &#x27;12/06/2022&#x27; AS day, &#x27;Richmond upon Thames&#x27;   AS London_Borough,	
+              True  AS Shop_1,	False AS Shop_2,	False  AS Shop_3 UNION ALL
+      SELECT &#x27;12/06/2022&#x27; AS day, &#x27;Hammersmith and Fulham&#x27; AS London_Borough,	
+              True  AS Shop_1,	False AS Shop_2,	True   AS Shop_3 UNION ALL
+      SELECT &#x27;12/06/2022&#x27; AS day, &#x27;Kensington and Chelsea&#x27; AS London_Borough,	
+              True  AS Shop_1,	True  AS Shop_2,	False  AS Shop_3 UNION ALL
+      SELECT &#x27;12/06/2022&#x27; AS day, &#x27;City of Westminster&#x27;    AS London_Borough,	
+              True  AS Shop_1,	True  AS Shop_2,	True   AS Shop_3 
+),</code></pre><pre id="ffb7068e-6940-44ad-b5c2-1054236846a0" class="code"><code>
+-- SUPPLY
+prob_of_supply_per_borough AS (
+SELECT &#x27;Camden&#x27;                 AS London_Borough, 0.118 AS supplier_1, 
+                                                   0.118 AS supplier_2 UNION ALL
+SELECT &#x27;Ealing&#x27;                 AS London_Borough, 0.157 AS supplier_1, 
+                                                   0.157 AS supplier_2 UNION ALL
+SELECT &#x27;Greenwich&#x27;              AS London_Borough, 0.118 AS supplier_1, 
+                                                   0.118 AS supplier_2 UNION ALL
+SELECT &#x27;Hounslow&#x27;               AS London_Borough, 0.220 AS supplier_1,
+                                                   0.220 AS supplier_2 UNION ALL
+SELECT &#x27;Richmond upon Thames&#x27;   AS London_Borough, 0.078 AS supplier_1,
+                                                   0.078 AS supplier_2 UNION ALL
+SELECT &#x27;Hammersmith and Fulham&#x27; AS London_Borough, 0.192 AS supplier_1, 
+                                                   0.192 AS supplier_2 UNION ALL
+SELECT &#x27;Kensington and Chelsea&#x27; AS London_Borough, 0.039 AS supplier_1,
+                                                   0.039 AS supplier_2 UNION ALL
+SELECT &#x27;City of Westminster&#x27;    AS London_Borough, 0.078 AS supplier_1, 
+                                                   0.078 AS supplier_2
+),
+daily_total_supplied_quantity AS(
+SELECT &#x27;11/06/2022&#x27; AS day, 255 AS supplier_1, 255 AS supplier_2 UNION ALL 
+SELECT &#x27;12/06/2022&#x27; AS day, 510 AS supplier_1, 255 AS supplier_2 
+),
+un_pivot_demand AS (
+SELECT day, London_Borough, shop, indicator FROM demand
+UNPIVOT(indicator FOR shop IN (shop_1, shop_2, shop_3))
+), 
+deman_weight_un_pivot_demand AS (
+SELECT day,	
+       London_Borough,	
+       u.shop,	
+       indicator,	
+       demand_weight,
+       CASE WHEN indicator THEN demand_weight ELSE 0 END AS indicator_weight,
+
+FROM un_pivot_demand AS u
+INNER JOIN demand_weight AS d ON d.shop=u.shop
+),
+row_normalised_deman_weight_un_pivot_demand AS (
+ SELECT
+       day,	
+       London_Borough,	
+       shop,	
+       indicator,	
+       demand_weight,
+       indicator_weight,
+       CASE WHEN SUM(indicator_weight) OVER(PARTITION BY day,	London_Borough) &gt; 0 
+                 THEN indicator_weight / SUM(indicator_weight) 
+                                         OVER(PARTITION BY day,	London_Borough) 
+                 ELSE 0
+       END AS row_normalise_weight 
+FROM deman_weight_un_pivot_demand
+WHERE indicator_weight &gt; 0
+),
+un_pivot_prob_of_supply_per_borough AS (
+SELECT London_Borough, supplier, probability FROM prob_of_supply_per_borough
+UNPIVOT(probability FOR supplier IN (supplier_1, supplier_2))
+),
+un_pivot_daily_total_supplied_quantity AS (
+SELECT day, supplier, quantity FROM daily_total_supplied_quantity
+UNPIVOT(quantity FOR supplier IN (supplier_1, supplier_2))
+),
+-- START DHondt_daily_supplier
+initial_step_of_DHondt_daily_supplier AS
+(
+SELECT day, 
+       London_Borough,  
+       d.supplier, 
+       probability, 
+       quantity, 
+       probability * (quantity + 1)        AS fraction,
+       FLOOR(probability * (quantity + 1)) AS res,
+
+       SUM( FLOOR(probability * (quantity + 1)) ) OVER (PARTITION BY day, d.supplier)  
+            AS total_res,
+       quantity	-  
+            SUM( FLOOR(probability * (quantity + 1)) ) 
+            OVER (PARTITION BY day, d.supplier)  AS n, 
+       ROW_NUMBER() OVER (
+                    PARTITION BY day, d.supplier 
+                    ORDER BY (       probability * (quantity + 1) - 
+                               FLOOR(probability * (quantity + 1)) ) DESC) 
+                    AS th_largest_reminder, 
+       ROW_NUMBER() OVER (
+                    PARTITION BY day, 
+                    d.supplier ORDER BY probability)
+                    AS smallest_weight
+FROM un_pivot_daily_total_supplied_quantity AS d
+INNER JOIN un_pivot_prob_of_supply_per_borough AS p ON d.supplier = p.supplier
+),
+final_step_of_DHondt_daily_supplier as (
+SELECT *, 
+       CAST(CASE WHEN (n = -1) AND (smallest_weight      = 1) THEN res - 1
+                 WHEN (n &gt;  0) AND (th_largest_reminder &lt;= n) THEN res + 1
+                 ELSE res
+            END AS INT64) AS daily_supplier_allocation
+FROM initial_step_of_DHondt_daily_supplier
+),
+-- END   DHondt_daily_supplier
+-- START DHondt_supply_AS_demand
+initial_step_of_DHondt_supply_AS_demand AS (
+SELECT
+       r.day,
+       r.London_Borough,	
+       shop,	
+       row_normalise_weight,
+       daily_supplier_allocation, 
+
+
+       row_normalise_weight * (daily_supplier_allocation + 1)        AS fraction,
+       FLOOR(row_normalise_weight * (daily_supplier_allocation + 1)) AS res,
+
+       SUM( FLOOR(row_normalise_weight * (daily_supplier_allocation + 1)) )
+            OVER (PARTITION BY r.day, r.London_Borough) AS total_res,
+       daily_supplier_allocation	-  
+            SUM( FLOOR(row_normalise_weight * (daily_supplier_allocation + 1)) ) 
+                 OVER (PARTITION BY r.day, r.London_Borough)  AS n, 
+       ROW_NUMBER() OVER (
+                    PARTITION BY r.day, r.London_Borough 
+                    ORDER BY ( row_normalise_weight * (daily_supplier_allocation + 1) - 
+                    FLOOR(row_normalise_weight * (daily_supplier_allocation + 1)) ) DESC)
+                    AS th_largest_reminder, 
+       ROW_NUMBER() OVER (PARTITION BY r.day, r.London_Borough 
+                          ORDER BY row_normalise_weight) AS smallest_weight
+FROM row_normalised_deman_weight_un_pivot_demand AS r
+INNER JOIN (
+              SELECT  day,	
+                      London_Borough,
+                      SUM(daily_supplier_allocation) AS daily_supplier_allocation
+              FROM final_step_of_DHondt_daily_supplier
+              GROUP BY day, London_Borough
+           ) as s ON r.day = s.day AND r.London_Borough = s.London_Borough 
+WHERE row_normalise_weight &gt; 0
+),
+final_step_of_DHondt_supply_AS_demand  as (
+SELECT *, 
+       CAST(CASE WHEN (n = -1) AND (smallest_weight      = 1) THEN res - 1
+                 WHEN (n &gt;  0) AND (th_largest_reminder &lt;= n) THEN res + 1
+                 ELSE res
+            END AS INT64) AS allocation
+FROM initial_step_of_DHondt_supply_AS_demand
+ORDER BY day,	London_Borough, shop
+),
+-- END DHondt_supply_AS_demand
+available_demand AS (
+SELECT
+       s.shop,
+       demand_quantity,
+       supply_quantity,
+       CASE WHEN demand_quantity &lt; supply_quantity 
+                 THEN demand_quantity
+                 ELSE supply_quantity
+       END  AS available_demand
+FROM  shop_demand as s
+INNER JOIN ( 
+              SELECT 
+                      shop,
+                      SUM(allocation) AS supply_quantity
+              FROM final_step_of_DHondt_supply_AS_demand
+              GROUP BY shop 
+   
+           ) AS f ON s.shop = f.shop 
+),
+pre_final AS
+(
+    SELECT 
+            day,
+            London_Borough,	
+            f.shop,	
+            allocation * 1.0 / SUM(allocation) OVER(PARTITION BY f.shop) 
+                      AS column_normalised_weight, 
+            available_demand
+    FROM  final_step_of_DHondt_supply_AS_demand AS f
+    INNER JOIN available_demand  AS a on f.shop = a.shop
+),
+-- START DHondt_final
+initial_step_of_DHondt_final AS (
+SELECT
+       day,
+       London_Borough,	
+       shop,	
+       column_normalised_weight,
+       available_demand, 
+
+       column_normalised_weight * (available_demand + 1)           AS fraction,
+       FLOOR( column_normalised_weight * (available_demand + 1)  ) AS res,
+
+       SUM( FLOOR( column_normalised_weight * (available_demand + 1)) )
+            OVER (PARTITION BY shop) AS total_res,
+       available_demand	-  
+            SUM( FLOOR( column_normalised_weight * (available_demand + 1)) ) 
+            OVER (PARTITION BY shop)   AS n, 
+       ROW_NUMBER() OVER (
+                    PARTITION BY shop 
+                    ORDER BY ( column_normalised_weight * (available_demand + 1) -
+                    FLOOR(  column_normalised_weight * (available_demand + 1)  )) DESC) 
+                    AS th_largest_reminder, 
+       ROW_NUMBER() OVER (
+                    PARTITION BY shop 
+                    ORDER BY column_normalised_weight)
+                    AS smallest_weight
+FROM pre_final
+),
+final_step_of_DHondt_final  as (
+SELECT *, 
+       CAST(CASE WHEN (n = -1) AND (smallest_weight      = 1) THEN res - 1
+                 WHEN (n &gt;  0) AND (th_largest_reminder &lt;= n) THEN res + 1
+                 ELSE res
+            END AS INT64) AS allocation
+FROM initial_step_of_DHondt_final
+),
+-- END DHondt_final
+pivot_final AS(
+SELECT day,	
+       London_Borough,	
+       IFNULL(CAST(allocation_shop_1 AS INT64), 0)	AS allocation_shop_1,
+       IFNULL(CAST(allocation_shop_2 AS INT64), 0) AS allocation_shop_2,
+       IFNULL(CAST(allocation_shop_3 AS INT64), 0) AS allocation_shop_3 
+FROM
+(
+  -- #1 from_item
+  SELECT 
+    day,
+    London_Borough,
+    shop,
+    CAST(allocation AS INT64) AS allocation
+  FROM final_step_of_DHondt_final
+)
+PIVOT
+(
+  -- #2 aggregate
+  AVG(allocation) AS allocation
+  -- #3 pivot_column
+  FOR shop in (&#x27;shop_1&#x27;, &#x27;shop_2&#x27;, &#x27;shop_3&#x27;)
+)
+ORDER BY day, London_Borough
+)
+
+select * from pivot_final</code></pre></div></article></body></html>
