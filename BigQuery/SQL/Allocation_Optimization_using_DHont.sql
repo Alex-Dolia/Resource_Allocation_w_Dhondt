@@ -231,4 +231,12 @@ ORDER BY day, London_Borough
 --select * from available_demand 
 --select * from final_step_of_DHondt_final
 --select sum(allocation_shop_1), sum( allocation_shop_2), sum(allocation_shop_3) from pivot_final
-select allocation_shop_1, allocation_shop_2,  allocation_shop_3 from pivot_final
+--select day,	London_Borough, allocation_shop_1, allocation_shop_2,  allocation_shop_3 from pivot_final
+SELECT 
+      day,	
+      London_Borough, 
+      CAST(IFNULL(allocation_shop_1, 0) AS INT64) AS shop_1, 
+      CAST(IFNULL(allocation_shop_2, 0) AS INT64) AS shop_2,  
+      CAST(IFNULL(allocation_shop_3, 0) AS INT64) AS shop_3
+FROM pivot_final
+ORDER BY day, London_Borough 
